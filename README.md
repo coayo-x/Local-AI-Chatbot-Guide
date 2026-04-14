@@ -8,21 +8,24 @@ Set up a local AI chatbot with a web interface running on your Raspberry Pi.
 
 ## Requirements
 
-- Raspberry Pi (4 or 5 recommended)
-- Raspberry Pi OS (Debian-based)
+- Raspberry Pi 4 or 5
+- 64-bit Raspberry Pi OS (Debian-based)
 - Internet connection
+- 4 GB RAM minimum
+- 8 GB RAM recommended for better performance
 
 ## Stack
 
 - Ollama
 - Docker
 - Open WebUI
-- Models: `gemma:2b` (or any Ollama-supported model)
+- Model: `gemma:2b` (or any Ollama-supported model)
 
 ## Notes
 
-- `gemma:2b` is lightweight and works on Raspberry Pi, but performance may be slow.
-- Larger models may not run well due to limited RAM and CPU.
+- This guide assumes you are using a 64-bit Raspberry Pi OS on a Raspberry Pi 4 or 5.
+- `gemma:2b` is one of the lighter models, but it can still feel slow on a Pi 4.
+- Larger models may run poorly or fail if your Pi does not have enough RAM.
 
 ## Setup
 
@@ -56,6 +59,16 @@ Test the model:
 ```bash
 ollama run gemma:2b
 ```
+
+Press `Ctrl + C` to stop the chat.
+
+Check that Ollama is running:
+
+```bash
+curl http://127.0.0.1:11434/api/tags
+```
+
+If you get a response, Ollama is available and ready for Open WebUI.
 
 ### 3. Install Docker
 
@@ -113,23 +126,11 @@ sudo usermod -aG docker $USER
 newgrp docker
 ```
 
-> If Docker commands still fail, log out and log back in.
+If Docker commands still fail, log out and log back in.
 
 ### 4. Run Open WebUI
 
-Default (host network):
-
-```bash
-docker run -d \
---network=host \
--v open-webui:/app/backend/data \
--e OLLAMA_BASE_URL=http://127.0.0.1:11434 \
---name open-webui \
---restart always \
-ghcr.io/open-webui/open-webui:main
-```
-
-ARM64 (Raspberry Pi 4/5):
+This guide uses the ARM64 image for Raspberry Pi 4/5 on 64-bit Raspberry Pi OS.
 
 ```bash
 docker run -d \
@@ -178,9 +179,27 @@ docker logs open-webui
 
 ## Troubleshooting
 
+### Open WebUI does not connect to Ollama
+
+Check that Ollama is running:
+
+```bash
+curl http://127.0.0.1:11434/api/tags
+```
+
+If this does not return a response, Ollama is not available yet.
+
+You can also check Open WebUI logs:
+
+```bash
+docker logs open-webui
+```
+
 ### Port conflict
 
-If port 8080 is already in use, remove `--network=host` and use:
+If port `8080` is already in use, use the command below instead.
+
+This command replaces the previous `docker run` command completely.
 
 ```bash
 docker run -d \
@@ -189,8 +208,13 @@ docker run -d \
 -e OLLAMA_BASE_URL=http://127.0.0.1:11434 \
 --name open-webui \
 --restart always \
-ghcr.io/open-webui/open-webui:main
+ghcr.io/open-webui/open-webui:main-arm64
 ```
+
+Then open:
+
+* `http://localhost:8081`
+* `http://<your-raspberry-pi-ip>:8081`
 
 ### Permission issues
 
@@ -199,21 +223,21 @@ sudo usermod -aG docker $USER
 newgrp docker
 ```
 
-Log out and log back in if needed.
+If needed, log out and log back in.
 
 ## Update Open WebUI
 
 ```bash
 docker stop open-webui
 docker rm open-webui
-docker pull ghcr.io/open-webui/open-webui:main
+docker pull ghcr.io/open-webui/open-webui:main-arm64
 docker run -d \
 --network=host \
 -v open-webui:/app/backend/data \
 -e OLLAMA_BASE_URL=http://127.0.0.1:11434 \
 --name open-webui \
 --restart always \
-ghcr.io/open-webui/open-webui:main
+ghcr.io/open-webui/open-webui:main-arm64
 ```
 
 ## Done
