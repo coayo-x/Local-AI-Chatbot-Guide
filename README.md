@@ -9,6 +9,7 @@ Set up a local AI chatbot with a web interface running on your Raspberry Pi.
 ## Requirements
 
 - Raspberry Pi (4 or 5 recommended)
+- Raspberry Pi OS (Debian-based)
 - Internet connection
 
 ## Stack
@@ -18,6 +19,11 @@ Set up a local AI chatbot with a web interface running on your Raspberry Pi.
 - Open WebUI
 - Models: `gemma:2b` (or any Ollama-supported model)
 
+## Notes
+
+- `gemma:2b` is lightweight and works on Raspberry Pi, but performance may be slow.
+- Larger models may not run well due to limited RAM and CPU.
+
 ## Setup
 
 ### 1. Update system
@@ -25,7 +31,7 @@ Set up a local AI chatbot with a web interface running on your Raspberry Pi.
 ```bash
 sudo apt update
 sudo apt upgrade
-````
+```
 
 ### 2. Install Ollama
 
@@ -107,7 +113,11 @@ sudo usermod -aG docker $USER
 newgrp docker
 ```
 
+> If Docker commands still fail, log out and log back in.
+
 ### 4. Run Open WebUI
+
+Default (host network):
 
 ```bash
 docker run -d \
@@ -119,7 +129,25 @@ docker run -d \
 ghcr.io/open-webui/open-webui:main
 ```
 
+ARM64 (Raspberry Pi 4/5):
+
+```bash
+docker run -d \
+--network=host \
+-v open-webui:/app/backend/data \
+-e OLLAMA_BASE_URL=http://127.0.0.1:11434 \
+--name open-webui \
+--restart always \
+ghcr.io/open-webui/open-webui:main-arm64
+```
+
 ## Access
+
+Find your Raspberry Pi IP:
+
+```bash
+hostname -I
+```
 
 Open your browser:
 
@@ -152,8 +180,16 @@ docker logs open-webui
 
 ### Port conflict
 
+If port 8080 is already in use, remove `--network=host` and use:
+
 ```bash
--p 8081:8080
+docker run -d \
+-p 8081:8080 \
+-v open-webui:/app/backend/data \
+-e OLLAMA_BASE_URL=http://127.0.0.1:11434 \
+--name open-webui \
+--restart always \
+ghcr.io/open-webui/open-webui:main
 ```
 
 ### Permission issues
@@ -163,11 +199,7 @@ sudo usermod -aG docker $USER
 newgrp docker
 ```
 
-### ARM64 (Raspberry Pi 4/5)
-
-```bash
-ghcr.io/open-webui/open-webui:main-arm64
-```
+Log out and log back in if needed.
 
 ## Update Open WebUI
 
@@ -189,6 +221,5 @@ ghcr.io/open-webui/open-webui:main
 Local AI chatbot is running.
 
 Access it in your browser and manage it with Docker.
-
 
 ---
