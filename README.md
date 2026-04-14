@@ -190,4 +190,5 @@ Local AI chatbot is running.
 
 Access it in your browser and manage it with Docker.
 
-```
+
+---
