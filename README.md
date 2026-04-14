@@ -13,6 +13,7 @@ Set up a local AI chatbot with a web interface running on your Raspberry Pi.
 - Internet connection
 - 4 GB RAM minimum
 - 8 GB RAM recommended for better performance
+- At least 8 GB of free storage recommended
 
 ## Stack
 
@@ -23,20 +24,39 @@ Set up a local AI chatbot with a web interface running on your Raspberry Pi.
 
 ## Notes
 
-- This guide assumes you are using a 64-bit Raspberry Pi OS on a Raspberry Pi 4 or 5.
-- `gemma:2b` is one of the lighter models, but it can still feel slow on a Pi 4.
+- This guide is for Raspberry Pi 4/5 running 64-bit Raspberry Pi OS.
+- `gemma:2b` is one of the lighter models, but it may still feel slow on a Pi 4.
 - Larger models may run poorly or fail if your Pi does not have enough RAM.
+- Pulling a model can take time and storage space depending on your internet speed and available disk space.
+- This guide uses a fixed Open WebUI image tag for better stability instead of a moving `main` tag.
+- Example fixed image tag used in this guide: `git-a382e82`
 
 ## Setup
 
-### 1. Update system
+### 1. Check system architecture
+
+Run:
+
+```bash
+getconf LONG_BIT
+uname -m
+```
+
+Expected output:
+
+- `64`
+- `aarch64`
+
+If your system is not 64-bit, stop here and install a 64-bit version of Raspberry Pi OS before continuing.
+
+### 2. Update system
 
 ```bash
 sudo apt update
-sudo apt upgrade
+sudo apt upgrade -y
 ```
 
-### 2. Install Ollama
+### 3. Install Ollama
 
 ```bash
 curl -fsSL https://ollama.com/install.sh | sh
@@ -52,6 +72,14 @@ Pull a model:
 
 ```bash
 ollama pull gemma:2b
+```
+
+This may take a while depending on your internet speed and storage.
+
+Confirm the model is available:
+
+```bash
+ollama list
 ```
 
 Test the model:
@@ -70,7 +98,16 @@ curl http://127.0.0.1:11434/api/tags
 
 If you get a response, Ollama is available and ready for Open WebUI.
 
-### 3. Install Docker
+If you do not get a response, start Ollama manually:
+
+```bash
+ollama serve
+```
+
+Only do this if Ollama is not already running automatically.  
+If you start it this way, keep that terminal open while using Open WebUI.
+
+### 4. Install Docker
 
 Install required packages:
 
@@ -119,18 +156,38 @@ Verify Docker:
 sudo docker run hello-world
 ```
 
-Optional: add your user to Docker group
+Optional: add your user to the Docker group if you want to run Docker commands without `sudo`
 
 ```bash
 sudo usermod -aG docker $USER
 newgrp docker
 ```
 
-If Docker commands still fail, log out and log back in.
+`newgrp docker` may work right away, but logging out and back in is more reliable before continuing.
 
-### 4. Run Open WebUI
+If you skip this step, use `sudo` with all Docker commands below.
 
-This guide uses the ARM64 image for Raspberry Pi 4/5 on 64-bit Raspberry Pi OS.
+### 5. Run Open WebUI
+
+Set the fixed image tag used in this guide:
+
+```bash
+export OPEN_WEBUI_IMAGE=ghcr.io/open-webui/open-webui:git-a382e82
+```
+
+Pull the image:
+
+```bash
+docker pull $OPEN_WEBUI_IMAGE
+```
+
+If you did not add your user to the Docker group, use:
+
+```bash
+sudo docker pull $OPEN_WEBUI_IMAGE
+```
+
+Run Open WebUI:
 
 ```bash
 docker run -d \
@@ -139,7 +196,31 @@ docker run -d \
 -e OLLAMA_BASE_URL=http://127.0.0.1:11434 \
 --name open-webui \
 --restart always \
-ghcr.io/open-webui/open-webui:main-arm64
+$OPEN_WEBUI_IMAGE
+```
+
+If you did not add your user to the Docker group, use:
+
+```bash
+sudo docker run -d \
+--network=host \
+-v open-webui:/app/backend/data \
+-e OLLAMA_BASE_URL=http://127.0.0.1:11434 \
+--name open-webui \
+--restart always \
+$OPEN_WEBUI_IMAGE
+```
+
+Check that the container is running:
+
+```bash
+docker ps
+```
+
+If you did not add your user to the Docker group, use:
+
+```bash
+sudo docker ps
 ```
 
 ## Access
@@ -152,8 +233,13 @@ hostname -I
 
 Open your browser:
 
-* `http://localhost:8080`
-* `http://<your-raspberry-pi-ip>:8080`
+- `http://localhost:8080`
+- `http://<your-raspberry-pi-ip>:8080`
+
+`localhost:8080` works only on the Raspberry Pi itself.  
+Use the Raspberry Pi IP from another device on the same network.
+
+If the page opens and shows the account creation screen, the setup worked.
 
 Create an account. The first account becomes the admin.
 
@@ -177,6 +263,8 @@ Logs:
 docker logs open-webui
 ```
 
+If you did not add your user to the Docker group, use `sudo` with these commands.
+
 ## Troubleshooting
 
 ### Open WebUI does not connect to Ollama
@@ -189,6 +277,14 @@ curl http://127.0.0.1:11434/api/tags
 
 If this does not return a response, Ollama is not available yet.
 
+Start Ollama manually if needed:
+
+```bash
+ollama serve
+```
+
+Only use `ollama serve` if Ollama is not already running automatically.
+
 You can also check Open WebUI logs:
 
 ```bash
@@ -197,24 +293,25 @@ docker logs open-webui
 
 ### Port conflict
 
-If port `8080` is already in use, use the command below instead.
+This guide uses `--network=host`, so Open WebUI uses port `8080` directly on the Raspberry Pi.
 
-This command replaces the previous `docker run` command completely.
+If port `8080` is already in use, find what is using it:
 
 ```bash
-docker run -d \
--p 8081:8080 \
--v open-webui:/app/backend/data \
--e OLLAMA_BASE_URL=http://127.0.0.1:11434 \
---name open-webui \
---restart always \
-ghcr.io/open-webui/open-webui:main-arm64
+sudo ss -ltnp | grep :8080
 ```
 
-Then open:
+Then stop or reconfigure that service, and run the original Open WebUI command again.
 
-* `http://localhost:8081`
-* `http://<your-raspberry-pi-ip>:8081`
+### Container name already in use
+
+If you get an error saying the container name is already in use, remove the old container:
+
+```bash
+docker rm -f open-webui
+```
+
+Then run the Open WebUI command again.
 
 ### Permission issues
 
@@ -223,22 +320,34 @@ sudo usermod -aG docker $USER
 newgrp docker
 ```
 
-If needed, log out and log back in.
+If Docker still fails, log out and log back in.
+
+### Download or install commands fail
+
+If `curl` or Docker install commands fail, check:
+
+- Internet connection
+- DNS/network settings
+- System date and time
 
 ## Update Open WebUI
 
+To update later, choose another valid fixed tag from the Open WebUI container registry tags list.
+
+You can find new fixed tags on the GitHub Container Registry page for `ghcr.io/open-webui/open-webui`.
+
+Then change the image tag, pull it, and use the same `docker run` command from Step 5 again.
+
+Example:
+
 ```bash
+export OPEN_WEBUI_IMAGE=ghcr.io/open-webui/open-webui:<new-fixed-tag>
 docker stop open-webui
 docker rm open-webui
-docker pull ghcr.io/open-webui/open-webui:main-arm64
-docker run -d \
---network=host \
--v open-webui:/app/backend/data \
--e OLLAMA_BASE_URL=http://127.0.0.1:11434 \
---name open-webui \
---restart always \
-ghcr.io/open-webui/open-webui:main-arm64
+docker pull $OPEN_WEBUI_IMAGE
 ```
+
+Then run the same Open WebUI command from Step 5.
 
 ## Done
 
