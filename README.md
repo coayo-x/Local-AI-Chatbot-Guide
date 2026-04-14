@@ -181,28 +181,10 @@ Pull the image:
 docker pull $OPEN_WEBUI_IMAGE
 ```
 
-If you did not add your user to the Docker group, use:
-
-```bash
-sudo docker pull $OPEN_WEBUI_IMAGE
-```
-
 Run Open WebUI:
 
 ```bash
 docker run -d \
---network=host \
--v open-webui:/app/backend/data \
--e OLLAMA_BASE_URL=http://127.0.0.1:11434 \
---name open-webui \
---restart always \
-$OPEN_WEBUI_IMAGE
-```
-
-If you did not add your user to the Docker group, use:
-
-```bash
-sudo docker run -d \
 --network=host \
 -v open-webui:/app/backend/data \
 -e OLLAMA_BASE_URL=http://127.0.0.1:11434 \
@@ -217,11 +199,7 @@ Check that the container is running:
 docker ps
 ```
 
-If you did not add your user to the Docker group, use:
-
-```bash
-sudo docker ps
-```
+If you did not add your user to the Docker group, use `sudo` with the Docker commands above.
 
 ## Access
 
@@ -334,7 +312,7 @@ If `curl` or Docker install commands fail, check:
 
 To update later, choose another valid fixed tag from the Open WebUI container registry tags list.
 
-You can find new fixed tags on the GitHub Container Registry page for `ghcr.io/open-webui/open-webui`.
+You can find new fixed tags on the package page for `ghcr.io/open-webui/open-webui` in GitHub Container Registry. Open the package page, check the available tags, and choose a newer fixed tag.
 
 Then change the image tag, pull it, and use the same `docker run` command from Step 5 again.
 
@@ -354,5 +332,13 @@ Then run the same Open WebUI command from Step 5.
 Local AI chatbot is running.
 
 Access it in your browser and manage it with Docker.
+
+---
+
+## Contact
+
+If you have questions, run into errors, or need help with this setup, feel free to contact:
+
+[![Email](https://img.shields.io/badge/Email-Contact%20Me-0A66C2?style=for-the-badge&logo=gmail&logoColor=white)](mailto:Local-AI-Chatbot-Guide-repo@coayo.com)
 
 ---
