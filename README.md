@@ -1,6 +1,8 @@
-# Local AI Chatbot Guide
+<!-- # Local AI Chatbot Guide
 
-A step-by-step guide to run a local AI chatbot using Ollama, Docker, and Open WebUI on Raspberry Pi.
+A step-by-step guide to run a local AI chatbot using Ollama, Docker, and Open WebUI on Raspberry Pi. -->
+<p align="center"><a href="https://github.com/coayo-x/Local-AI-Chatbot-Guide/blob/main/README.md#setup"><img alt="Local AI Chatbot Guide. A step-by-step guide to run a local AI chatbot using Ollama, Docker, and Open WebUI on Raspberry Pi." src="./image/repo-title" /></a></p>
+
 
 ## Overview
 
